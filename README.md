@@ -99,6 +99,8 @@ export PKG_CONFIG_PATH=$path_to_pkg_config_pc_dir
   configure --pkg-config-flags="--define-prefix"
   ```
 
+  注意直接传给FFmpeg configure有风险，会影响所有库的pkg-config执行。特定库需要修改pc文件中的路径，可以把`pkg-config --define-prefix --cflags libfoo` `pkg-config --define-prefix --libs libfoo`的结果传给FFmpeg configure。
+
 
 
 ## avcodec编解码相关
