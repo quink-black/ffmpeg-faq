@@ -107,6 +107,44 @@ export PKG_CONFIG_PATH=$path_to_pkg_config_pc_dir
 
 ## avformat相关
 
+#### H.265编码MP4封装，macOS/iOS上无法播放
 
+例如：
+
+```
+ffmpeg -i ~/Movies/hevc-6fps.mp4 -c copy /tmp/test.mp4
+```
+
+用QuickTime player打开/tmp/test.mp4报错。
+
+方法：加上`-tag:v hvc1`
+
+```
+ffmpeg -i ~/Movies/hevc-6fps.mp4 -c copy -tag:v hvc1 /tmp/test.mp4
+```
+
+原因：
+
+Apple要求mp4中的codec tag必须是hvc1:
+
+```
+                        [stsd: Sample Description Box]
+                            position = 1184036
+                            size = 2269
+                            version = 0
+                            flags = 0x000000
+                            entry_count = 1
+                            [hvc1: Visual Description]
+                                position = 1184052
+                                size = 2253
+```
+
+[apple developer](https://developer.apple.com/documentation/http_live_streaming/http_live_streaming_hls_authoring_specification_for_apple_devices?language=objc)
+
+> 1.10. You SHOULD use video formats in which the parameter sets are stored in the sample descriptions, rather than the samples. (That is, use `'avc1'`, `'hvc1'`, or `'dvh1'` rather than `'avc3'`, `'hev1'`, or `'dvhe'`.)
+
+关于参数集in-band/out-of-band的差异，见
+
+[H.264参数集处理](https://gist.github.com/quink-black/6828ebf722f6a4d35fbc5c5bc2dbaf42)
 
 ## Filter相关
