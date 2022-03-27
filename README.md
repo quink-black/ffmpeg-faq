@@ -1,7 +1,5 @@
 # FFmpeg FAQ
 
-[toc]
-
 ## 编译相关
 
 ### 怎样使用相同的参数，重新运行configure命令
@@ -19,13 +17,10 @@
   * 手动的方法
 
     有时候可能并不是要重新运行configure，而是想查看下当前用了什么配置，可以在build目录的config.h中查找：
-    
+
     ```shell
     grep FFMPEG_CONFIGURATION config.h
     ```
-    
-
-
 
 ### 怎样“不”自动查找第三方库？
 
@@ -37,11 +32,7 @@
   ./configure --disable-autodetect
   ```
 
-
-
 ### pkg-config相关
-
-
 
 #### pkg-config的作用有哪些？
 
@@ -67,19 +58,13 @@
    Requested 'srt > 1.4.5' but version of srt is 1.4.3
    ```
 
-
-
 虽然pkg-config的结果最终还是作用于cflags/ldflags等等，但它代表着软件开发的一种思想：通过增加一层抽象来解耦。
-
-
 
 #### pkg-config pc文件不在标准路径下怎么办？
 
 ```
 export PKG_CONFIG_PATH=$path_to_pkg_config_pc_dir
 ```
-
-
 
 #### pc文件里的路径和实际路径不对应怎么办？
 
@@ -101,11 +86,39 @@ export PKG_CONFIG_PATH=$path_to_pkg_config_pc_dir
 
   注意直接传给FFmpeg configure有风险，会影响所有库的pkg-config执行。特定库需要修改pc文件中的路径，可以把`pkg-config --define-prefix --cflags libfoo` `pkg-config --define-prefix --libs libfoo`的结果传给FFmpeg configure。
 
+### 如何编译无依赖的二进制文件
+
+1- 保证所有的依赖库都有静态库(.a) 的版本，否则会出现链接错误，包括c++ 的静态库。
+如何编译或安装依赖库的静态版本需要自行根据依赖库编译说明或所在平台的安装说明。
+
+```sh
+# Centos 安装c++ 静态库
+sudo yum install libstdc++-static
+```
+
+2- configure 指定静态编译相关选项
+
+```sh
+  --extra-cflags="-static" \
+  --extra-ldflags="-static" \        # 静态链接二进制 ffmpeg
+  --pkg-config-flags="--static" \    # pkgconf 使用静态库
+```
+
+3. 确认是否是无依赖的二进制
+
+```sh
+ldd ffmpeg
+# 如果输出 not a dynamic executable 则表示二进制无依赖
+```
+
+### 如何编译 `doc/example` 目录下的例子
+
+```sh
+make -j8 examples
+```
 
 
 ## avcodec编解码相关
-
-
 
 ## avformat相关
 
