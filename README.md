@@ -117,7 +117,73 @@ ldd ffmpeg
 make -j8 examples
 ```
 
+## avutil相关
 
+### av_freep
+
+#### av_freep的作用
+
+* 防止use after free
+* 防止double free
+
+简要说明：
+
+1. 如果不清楚这两个概念，建议重学C语言；
+
+2. 如果不清楚什么场合该用av_free，什么场合用av_freep，建议使用av_freep()；
+
+3. 如果清楚什么场合适用哪一个，更佳；
+4. 如果能从代码结构设计、生命周期管理上，减少用av_freep()的场合，最佳。
+
+#### av_freep的代码实现为何如此奇怪？
+
+```c
+void av_freep(void *arg)
+{
+    void *val;
+
+    memcpy(&val, arg, sizeof(val));
+    memcpy(arg, &(void *){ NULL }, sizeof(val));
+    av_free(val);
+}
+```
+
+1. 参数为什么是`void *`，而不是`void **`?
+
+   因为任意指针可以与`void *`来回转换，而任意指针强转为`void **`是非法的，例如
+
+   ```c
+       int *p = malloc(sizeof(*p) * 123);
+       void **q = &p;
+   ```
+
+   > warning: incompatible pointer types initializing 'void **' with an expression of type 'int **' [-Wincompatible-pointer-types]
+   
+   **`void **`只能是`void*`的指针**。
+   
+2. 为什么有两个`memcpy`，为什么不用下面的简单形式：
+
+   ```c
+   void av_freep(void *arg)
+   {
+       void **ptr = (void **)arg;
+       av_free(*ptr);
+       *ptr = NULL;
+   }
+   ```
+   只有当arg实际为`void **`转成的`void *`时，`void **ptr = (void **)arg;`才是合法的；即不能把其他类型如`int **`转成
+   
+   `void *`，再把`void *`转成`void **`。背后的规则是**strict aliasing rule **[wiki aliasing](https://en.wikipedia.org/wiki/Aliasing_(computing))。
+   
+   两个memcpy的实现形式，**没有假设`arg`是`void **`，只假设`arg`是任意指针的指针**。
+   
+   当前的实现解决了aliasing violations，但它仍有一个标准之外的假设：运行的CPU架构所有指针类型用了相同的表达形式。过去存在不同指针类型用不同表达形式的CPU架构，见[comp.lang.c FAQ list · Question 5.17](http://c-faq.com/null/machexamp.html)。
+   
+3. 关于strict aliasing
+
+   strict aliasing可以让编译器做激进的优化，但对违反strict aliasing rule的代码会造成特别隐蔽的bug。所以，写代码严格遵守规则，而开启`-fstrict-aliasing`要谨慎。
+
+   深入分析讨论见：[What is the Strict Aliasing Rule and Why do we care?](https://gist.github.com/shafik/848ae25ee209f698763cffee272a58f8)
 ## avcodec编解码相关
 
 ## avformat相关
@@ -163,3 +229,4 @@ Apple要求mp4中的codec tag必须是hvc1:
 [H.264参数集处理](https://gist.github.com/quink-black/6828ebf722f6a4d35fbc5c5bc2dbaf42)
 
 ## Filter相关
+
