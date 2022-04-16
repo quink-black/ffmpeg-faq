@@ -188,7 +188,7 @@ void av_freep(void *arg)
 
 ## avformat相关
 
-#### H.265编码MP4封装，macOS/iOS上无法播放
+### H.265编码MP4封装，macOS/iOS上无法播放
 
 例如：
 
@@ -227,6 +227,17 @@ Apple要求mp4中的codec tag必须是hvc1:
 关于参数集in-band/out-of-band的差异，见
 
 [H.264参数集处理](https://gist.github.com/quink-black/6828ebf722f6a4d35fbc5c5bc2dbaf42)
+
+
+
+### 如何获取视频最后一帧
+
+```sh
+ffmpeg -sseof -0.5 -i foo.mp4 -an -update 1 bar.png
+```
+
+* `-sseof`，seek参考点为结尾
+* `-update 1`，不断覆盖同一个图片文件
 
 ## Filter相关
 
